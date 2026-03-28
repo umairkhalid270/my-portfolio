@@ -39,12 +39,23 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const messages = Array.isArray(body?.messages) ? body.messages : [];
 
-    const contents = messages
-      .filter((m) => m && typeof m.content === 'string')
+    // Build contents — must alternate user/model and end with user
+    let contents = messages
+      .filter((m) => m && typeof m.content === 'string' && m.content.trim())
       .map((m) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }],
       }));
+
+    // Gemini requires at least one user message
+    if (contents.length === 0) {
+      contents = [{ role: 'user', parts: [{ text: 'Hello' }] }];
+    }
+
+    // Gemini requires last message to be from user
+    if (contents[contents.length - 1].role !== 'user') {
+      contents.push({ role: 'user', parts: [{ text: 'Continue' }] });
+    }
 
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -63,7 +74,7 @@ export default async function handler(req, res) {
 
     if (!geminiRes.ok) {
       console.error('Gemini error:', JSON.stringify(data));
-      return res.status(500).json({ error: 'Gemini error' });
+      return res.status(500).json({ error: 'Gemini error', detail: JSON.stringify(data) });
     }
 
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
