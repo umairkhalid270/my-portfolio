@@ -80,7 +80,7 @@ export default function Projects() {
         </div>
         {/* Projects grid */}
         <div className="grid gap-8 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((project, idx) => (
+          {filtered.map((project) => (
             <div
               key={project.title}
               className="group bg-gradient-to-b from-[#101a2a]/70 to-[#090f20] border border-cyan-300/10 rounded-2xl shadow-[0_4px_24px_0_rgba(0,0,0,0.13)] p-6 flex flex-col h-full transition-all duration-300 cursor-pointer

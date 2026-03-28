@@ -95,11 +95,6 @@ function classNames(...classes) {
 export default function Skills() {
   const [active, setActive] = useState("All");
 
-  // Filtering skills
-  const filtered = SKILLS.filter(
-    (skill) => active === "All" || skill.category === active
-  );
-
   return (
     <section
       id="skills"
@@ -132,7 +127,7 @@ export default function Skills() {
         </div>
         {/* Skills grid */}
         <div className="grid gap-7 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {SKILLS.map((skill, idx) => {
+          {SKILLS.map((skill) => {
             // Determine if the skill passes the filter
             const isActive =
               active === "All" || skill.category === active;

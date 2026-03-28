@@ -117,3 +117,58 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ChatMessage.jsx bubble enter animation */
+@keyframes portfolio-chat-message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.portfolio-chat-msg-anim {
+  animation: portfolio-chat-message-enter 0.38s ease-out both;
+}
+
+/* ChatWindow.jsx — thin scrollbar */
+.portfolio-chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.45) rgba(238, 242, 255, 0.65);
+}
+.portfolio-chat-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.portfolio-chat-scroll::-webkit-scrollbar-track {
+  background: rgba(238, 242, 255, 0.7);
+  border-radius: 4px;
+}
+.portfolio-chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.45);
+  border-radius: 4px;
+}
+.portfolio-chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 40, 217, 0.55);
+}
+
+/* ChatBot.jsx FAB — soft pulse when closed (3s loop) */
+@keyframes portfolio-chat-fab-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 32px -4px rgba(79, 70, 229, 0.55),
+      0 0 0 0 rgba(99, 102, 241, 0.45);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 12px 40px -4px rgba(109, 40, 217, 0.6),
+      0 0 0 10px rgba(99, 102, 241, 0.12);
+  }
+}
+.portfolio-chat-fab-pulse {
+  animation: portfolio-chat-fab-pulse 3s ease-in-out infinite;
+}
