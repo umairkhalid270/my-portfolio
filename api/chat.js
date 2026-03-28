@@ -1,10 +1,4 @@
-/**
- * System prompt for portfolio-related AI chat: facts about Umair Khalid plus reply rules.
- */
-/**
- * System prompt for portfolio-related AI chat: facts about Umair Khalid plus reply rules.
- */
-export const SYSTEM_PROMPT = `You are a portfolio assistant for Umair Khalid. Use ONLY the facts below. Do not invent experience, projects, or contact details.
+const SYSTEM_PROMPT = `You are a portfolio assistant for Umair Khalid. Use ONLY the facts below. Do not invent experience, projects, or contact details.
 
 ## Person
 - Name: Umair Khalid
@@ -26,74 +20,48 @@ export const SYSTEM_PROMPT = `You are a portfolio assistant for Umair Khalid. Us
 - Email: umairkhalid270@gmail.com
 - GitHub: https://github.com/umairkhalid270
 
----
-
 ## How you must respond
 - Be friendly, witty, and conversational.
 - Answer only questions related to this person's portfolio, skills, projects, education, availability, or how to contact them.
 - Keep replies concise: 2–4 sentences maximum.
-- If you do not know something or it is not in the facts above, say so honestly—do not guess.
-- For detailed discussions, pricing, or topics beyond this portfolio, suggest the visitor email Umair or reach out via the contact details above.`;
+- If you do not know something, say so honestly.
+- For detailed discussions, suggest the visitor email Umair.`;
 
-/** CORS headers for browser clients (dev + production). */
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-/**
- * Maps chat roles to Gemini roles: only "user" and "model" are valid (not "assistant").
- */
 function toGeminiContents(messages) {
   if (!Array.isArray(messages)) return [];
-
   return messages
     .filter((m) => m && typeof m.content === 'string')
-    .map((m) => {
-      // OpenAI-style "assistant" becomes Gemini's "model"
-      const role =
-        m.role === 'assistant' ? 'model' : m.role === 'model' ? 'model' : 'user';
-      return {
-        role,
-        parts: [{ text: m.content }],
-      };
-    });
+    .map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
 }
 
-/**
- * Normalizes req.body when Vercel passes a string or unparsed body.
- */
 function getJsonBody(req) {
   const raw = req.body;
   if (raw == null) return {};
   if (typeof raw === 'string') {
-    try {
-      return JSON.parse(raw || '{}');
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(raw || '{}'); }
+    catch { return {}; }
   }
   return raw;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   setCorsHeaders(res);
 
-  // Preflight so cross-origin POST from the Vite dev server or another origin works
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).end();
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Something went wrong' });
-    }
+    if (!apiKey) return res.status(500).json({ error: 'Something went wrong' });
 
     const { messages } = getJsonBody(req);
     const contents = toGeminiContents(messages);
@@ -102,32 +70,25 @@ export default async function handler(req, res) {
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent' +
       `?key=${encodeURIComponent(apiKey)}`;
 
-    // Gemini REST expects camelCase (systemInstruction), not system_instruction
-    const geminiBody = {
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents,
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
-    };
-
     const geminiRes = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(geminiBody),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+      }),
     });
 
     const data = await geminiRes.json();
 
-    if (!geminiRes.ok) {
-      return res.status(500).json({ error: 'Something went wrong' });
-    }
+    if (!geminiRes.ok) return res.status(500).json({ error: 'Something went wrong' });
 
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (typeof reply !== 'string' || !reply) {
-      return res.status(500).json({ error: 'Something went wrong' });
-    }
+    if (typeof reply !== 'string' || !reply) return res.status(500).json({ error: 'Something went wrong' });
 
     return res.status(200).json({ reply });
   } catch {
     return res.status(500).json({ error: 'Something went wrong' });
   }
-}
+};
